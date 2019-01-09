@@ -2,9 +2,11 @@ package com.devloper.lloydfinch.recyclerviewdemo.recyclerview;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.devloper.lloydfinch.recyclerviewdemo.R;
 
@@ -17,6 +19,10 @@ import java.util.List;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
     private List<String> list = new ArrayList<>();
+
+    public RecyclerAdapter(List<String> list) {
+        this.list = list;
+    }
 
     @NonNull
     @Override
@@ -32,7 +38,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-
+        String text = list.get(position);
+        if (!TextUtils.isEmpty(text)) {
+            holder.textView.setText(text);
+        }
     }
 
     @Override
@@ -44,8 +53,11 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
         //这里内置了一个public final的itemView
 
+        public TextView textView;
+
         public VH(View itemView) {
             super(itemView); //其实就是把参数赋值给内置的itemView
+            textView = itemView.findViewById(R.id.tv_text);
         }
     }
 
