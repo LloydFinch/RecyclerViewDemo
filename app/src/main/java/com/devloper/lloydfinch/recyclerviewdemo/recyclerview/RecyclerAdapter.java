@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.devloper.lloydfinch.recyclerviewdemo.R;
 
@@ -58,6 +59,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
         public VH(View itemView) {
             super(itemView); //其实就是把参数赋值给内置的itemView
             textView = itemView.findViewById(R.id.tv_text);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(v.getContext(), "click!", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 

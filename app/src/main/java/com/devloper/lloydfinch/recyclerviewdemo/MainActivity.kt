@@ -8,6 +8,7 @@ import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.View
+import android.widget.Toast
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.RecyclerAdapter
 
 class MainActivity : AppCompatActivity() {
@@ -23,7 +24,7 @@ class MainActivity : AppCompatActivity() {
 
         //设置方向，默认是垂直的
         recyclerView.layoutManager = LinearLayoutManager(this)
-        //设置动画
+        //设置动画 //如果要设置为DefaultItemAnimator的话，就没什么卵用，人家自己默认已经实现了
         recyclerView.itemAnimator = DefaultItemAnimator()
         //设置间隔线
         recyclerView.addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -43,6 +44,10 @@ class MainActivity : AppCompatActivity() {
 
             override fun getItemOffsets(outRect: Rect?, view: View?, parent: RecyclerView?, state: RecyclerView.State?) {
                 super.getItemOffsets(outRect, view, parent, state)
+
+                //这里的React就是漏出来让你绘制的分割线
+                //view就是对应的itemView
+                //State表示当前的状态: 正在布局/正在动画
 
                 //设置item之间的间隔
                 //left/right: 控制的不仅仅是分割线的边距，还有item的边距
@@ -67,6 +72,15 @@ class MainActivity : AppCompatActivity() {
         }
         val adapter = RecyclerAdapter(datas)
         recyclerView.adapter = adapter
+        recyclerView.setOnClickListener {
+            Toast.makeText(this, "click recycler", Toast.LENGTH_SHORT).show()
+        }
+        //recyclerView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+
+        adapter.notifyDataSetChanged()
+        adapter.notifyItemChanged(0)
+
+        recyclerView.isLayoutFrozen = true //不能滑动，设置适配器会自动设置为false
     }
     //<editor-fold>
 }
