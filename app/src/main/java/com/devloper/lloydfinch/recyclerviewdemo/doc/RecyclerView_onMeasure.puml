@@ -1,0 +1,16 @@
+'RecyclerView的onMeasure()的时序图
+
+@startuml
+autonumber
+
+RecyclerView -> RecyclerView: onMeasure()
+note right: 这里会首先判断LayoutManager是否设置了，\n如果没有设置，走defaultOnMeasure()方法，\n这个方法会选宽高的minWidth/Height和padding中的较大的作为测量结果
+'defaultOnMeasure()
+'isAutoMeasureEnabled这个方法返回false，有一个过时的方法setAutoMeasureEnabled可以修改这个值，不建议使用
+'发现优化点setHasFixedSize()，当我们的RecyclerView的宽高不会被adapter的内容所影响，就设置为true，可以避免由于adapter内容改变造成的重新布局的开销
+
+
+
+
+
+@enduml

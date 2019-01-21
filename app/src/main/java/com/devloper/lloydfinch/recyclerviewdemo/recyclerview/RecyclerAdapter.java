@@ -3,6 +3,7 @@ package com.devloper.lloydfinch.recyclerviewdemo.recyclerview;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,35 +20,96 @@ import java.util.List;
  */
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
+    private RecyclerView mRecyclerView;
+
+    private View headerView;
+    private View footerView;
+    private View emptyView;
+
     private List<String> list = new ArrayList<>();
+
+    public void setRecyclerView(RecyclerView mRecyclerView) {
+        this.mRecyclerView = mRecyclerView;
+    }
 
     public RecyclerAdapter(List<String> list) {
         this.list = list;
+    }
+
+    public void setHeaderView(View headerView) {
+        this.headerView = headerView;
+    }
+
+    public void setFooterView(View footerView) {
+        this.footerView = footerView;
+    }
+
+    public void setEmptyView(View emptyView) {
+        this.emptyView = emptyView;
     }
 
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_item_string, parent, false);
+        if (ViewHolderType.HEADER.ordinal() == viewType && headerView != null) {
+            return new VH(headerView, viewType);
+        } else if (ViewHolderType.FOOTER.ordinal() == viewType && footerView != null) {
+            return new VH(footerView, viewType);
+        } else {
 
-        //这里省事多了，不需要写复用的逻辑了，里面有自己的一套复用逻辑
-        //重点是:这里复用的是ViewHolder，而不是inflate的View
+            View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_item_string, parent, false);
 
-        return new VH(itemView);
+            //这里省事多了，不需要写复用的逻辑了，里面有自己的一套复用逻辑
+            //重点是:这里复用的是ViewHolder，而不是inflate的View
+
+            return new VH(itemView, viewType);
+        }
     }
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-        String text = list.get(position);
-        if (!TextUtils.isEmpty(text)) {
-            holder.textView.setText(text);
+        if (position == 0) {
+            //处理headerView的数据
+        } else if (position == list.size() + 1) {
+            //处理footerView的数据
+        } else {
+            //这里注意数据的偏差
+            String text = list.get(position - 1);
+            if (!TextUtils.isEmpty(text)) {
+                holder.textView.setText(text);
+            }
         }
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        int size = list.size();
+        if (size > 0) {
+            //数据不为空，隐藏EmptyView
+            if (emptyView.getVisibility() == View.VISIBLE) {
+                emptyView.setVisibility(View.GONE);
+            }
+        } else {
+            //数据为空，显示EmptyView
+            if (emptyView.getVisibility() != View.VISIBLE) {
+                emptyView.setVisibility(View.VISIBLE);
+            }
+        }
+        //添加了header和footer，注意itemCount的返回值
+        //当没有数据的时候，不显示header和footer
+        return size > 0 ? size + 2 : size;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (position == 0) {
+            return ViewHolderType.HEADER.ordinal();
+        } else if (position == list.size() + 1) {
+            return ViewHolderType.FOOTER.ordinal();
+        } else {
+            return ViewHolderType.NORMAL.ordinal();
+        }
     }
 
     public static class VH extends RecyclerView.ViewHolder {
@@ -56,20 +118,29 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
         public TextView textView;
 
-        public VH(View itemView) {
+        public VH(View itemView, int viewType) {
             super(itemView); //其实就是把参数赋值给内置的itemView
-            textView = itemView.findViewById(R.id.tv_text);
+            if (ViewHolderType.HEADER.ordinal() == viewType) {
+                //处理headerView的一些问题
+            } else if (ViewHolderType.FOOTER.ordinal() == viewType) {
+                //处理footerView的一些问题
+            } else {
+                textView = itemView.findViewById(R.id.tv_text);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(v.getContext(), "click!", Toast.LENGTH_SHORT).show();
-                }
-            });
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(v.getContext(), "click!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
         }
     }
 
-    public void test() {
-
+    enum ViewHolderType {
+        HEADER,
+        FOOTER,
+        NORMAL
     }
 }
