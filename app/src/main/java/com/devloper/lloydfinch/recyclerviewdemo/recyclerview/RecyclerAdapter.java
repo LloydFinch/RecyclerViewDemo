@@ -48,6 +48,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
         this.emptyView = emptyView;
     }
 
+    public boolean hadHeader() {
+        return headerView != null;
+    }
+
+    public boolean hadFooter() {
+        return footerView != null;
+    }
+
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -69,13 +77,17 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
-        if (position == 0) {
+        if (position == 0 && headerView != null) {
             //处理headerView的数据
-        } else if (position == list.size() + 1) {
+        } else if (position == list.size() - 1 + getExtraViewCount() && footerView != null) {
             //处理footerView的数据
         } else {
             //这里注意数据的偏差
-            String text = list.get(position - 1);
+            int realPosition = position;
+            if (headerView != null) {
+                realPosition = position - 1;
+            }
+            String text = list.get(realPosition);
             if (!TextUtils.isEmpty(text)) {
                 holder.textView.setText(text);
             }
@@ -85,31 +97,50 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
     @Override
     public int getItemCount() {
         int size = list.size();
-        if (size > 0) {
-            //数据不为空，隐藏EmptyView
-            if (emptyView.getVisibility() == View.VISIBLE) {
-                emptyView.setVisibility(View.GONE);
-            }
-        } else {
-            //数据为空，显示EmptyView
-            if (emptyView.getVisibility() != View.VISIBLE) {
-                emptyView.setVisibility(View.VISIBLE);
+        if (emptyView != null) {
+            if (size > 0) {
+                //数据不为空，隐藏EmptyView
+                if (emptyView.getVisibility() == View.VISIBLE) {
+                    emptyView.setVisibility(View.GONE);
+                }
+            } else {
+                //数据为空，显示EmptyView
+                if (emptyView.getVisibility() != View.VISIBLE) {
+                    emptyView.setVisibility(View.VISIBLE);
+                }
             }
         }
+
         //添加了header和footer，注意itemCount的返回值
         //当没有数据的时候，不显示header和footer
-        return size > 0 ? size + 2 : size;
+        if (size > 0) {
+            size += getExtraViewCount();
+        }
+
+        return size;
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (position == 0) {
+        if (position == 0 && headerView != null) {
             return ViewHolderType.HEADER.ordinal();
-        } else if (position == list.size() + 1) {
+        } else if (position == list.size() - 1 + getExtraViewCount() && footerView != null) {
             return ViewHolderType.FOOTER.ordinal();
         } else {
             return ViewHolderType.NORMAL.ordinal();
         }
+    }
+
+
+    private int getExtraViewCount() {
+        int count = 0;
+        if (headerView != null) {
+            count++;
+        }
+        if (footerView != null) {
+            count++;
+        }
+        return count;
     }
 
     public static class VH extends RecyclerView.ViewHolder {

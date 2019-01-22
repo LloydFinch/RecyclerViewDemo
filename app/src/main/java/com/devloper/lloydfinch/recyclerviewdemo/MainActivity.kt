@@ -7,9 +7,10 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.DefaultItemAnimator
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -17,12 +18,19 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.RecyclerAdapter
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    val TAG = "MainActivity"
 
     private lateinit var recyclerView: RecyclerView
+    private val datas: ArrayList<String> = ArrayList()
     private var adapter: RecyclerAdapter? = null
+    private val pageSize = 20 //默认的一页的大小
+    private var lastScrollDY = 0 //最后一次垂直滑动的距离
+    private var lastVisiblePosition = 0 //最后一条可见数据的位置
+    private var isLoading = false //是否正在加载数据
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,13 +52,17 @@ class MainActivity : AppCompatActivity() {
 
         //测试一些辅助性能的view
         addAssistView()
+
+        //测试滑动监听
+        addScrollListener()
     }
 
     //<editor-fold desc = "测试基本用法">
     private fun testBasicFunction() {
-        val datas: ArrayList<String> = ArrayList()
-        for (i in 0..1000) {
-//            datas.add("android$i")
+        //初始化加载两页
+        val initSize = pageSize shl 1
+        for (i in 1..initSize) {
+            datas.add("android$i")
         }
         adapter = RecyclerAdapter(datas)
         recyclerView.adapter = adapter
@@ -60,8 +72,22 @@ class MainActivity : AppCompatActivity() {
         //recyclerView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 
         adapter?.notifyDataSetChanged()
+    }
 
-        //recyclerView.isLayoutFrozen = true //不能滑动，设置适配器会自动设置为false
+    //加载更多数据，这里一次加载一页
+    private fun loadMoreData() {
+        //isLoading标记注意线程问题
+        if (!isLoading) {
+            isLoading = true
+            val currentSize = adapter!!.itemCount
+            Log.e("$TAG-1", "loadMoreData-before: currentSize = $currentSize")
+            for (i in 1..pageSize) {
+                datas.add("android${currentSize + i}")
+            }
+            adapter?.notifyDataSetChanged()
+            Log.e("$TAG-1", "loadMoreData-after: currentSize = $currentSize")
+            isLoading = false
+        }
     }
     //<editor-fold>
 
@@ -148,14 +174,144 @@ class MainActivity : AppCompatActivity() {
 
     //<editor-fold desc = "添加各种动画">
     private fun addItemAnimation() {
-        //如果要设置为DefaultItemAnimator的话，就没什么卵用，人家自己默认已经实现了
-        recyclerView.itemAnimator = DefaultItemAnimator()
+
+        //重试UI的时候，使用动画 : 数量少但是块头大的数据，比如CardView
+        //重试数据的时候，不使用动画 : 数量多而简单的数据，比如消息列表
+//        adapter?.notifyItemInserted() //耗时的方法，会触发重新布局
+        //recyclerView.isLayoutFrozen = true //不能滑动，设置适配器会自动设置为false
+
+        //这里添加一个简单的拖拽和侧滑的动画
+
+        //上下左右都能拖拽
+        val dragDirs = ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        //这里定义能左滑删除
+        val swipeDirs = ItemTouchHelper.LEFT
+        val callback = object : ItemTouchHelper.SimpleCallback(dragDirs, swipeDirs) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                //item移动的时候会回调到这里
+
+                try {
+
+                    val initFrom = viewHolder.adapterPosition
+                    val initTo = target.adapterPosition
+
+                    var fromPosition = initFrom
+                    var toPosition = initTo
+
+                    Log.e("addItemAnimation", "onMove, from:$fromPosition, to:$toPosition")
+
+                    //有header的情况下，header不能作为to
+                    if (adapter!!.hadHeader()) {
+                        if (toPosition == 0) {
+                            return true
+                        }
+
+                        //并且header存在的情况下，因为item整体向下移动一个位置，所以数据要整体向上移动一个位置进行修正
+                        fromPosition--
+                        toPosition--
+                    }
+
+                    if (fromPosition < toPosition) {
+                        for (i in fromPosition until toPosition) {
+                            Collections.swap(datas, i, i + 1)
+                        }
+                    } else {
+                        for (i in toPosition until fromPosition) {
+                            Collections.swap(datas, i, i + 1)
+                        }
+                    }
+
+                    //数据交换完毕，还需要转换为布局的位置进行notify
+                    //这里的两个参数不能随便更改，一定要使用参数传入的
+                    adapter?.notifyItemMoved(initFrom, initTo)
+                } catch (e: Throwable) {
+                    Log.e("addItemAnimation", "error:" + e.message)
+                }
+
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                //item滑动的时候会回调到这里
+                Log.e("addItemAnimation", "onSwiped")
+                datas.removeAt(viewHolder.adapterPosition)
+                adapter?.notifyItemRemoved(viewHolder.adapterPosition)
+            }
+
+            override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
+
+                //onDraw()的时候往这里跑
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    //如果是正在滑动删除，则来一个淡出的动画
+                    val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
+                    viewHolder.itemView.alpha = alpha
+                    viewHolder.itemView.translationX = dX
+                } else {
+                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                }
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(callback)
+        itemTouchHelper.attachToRecyclerView(recyclerView)
     }
     //<editor-fold>
 
     //<editor-fold desc = "添加滑动监听事件">
     private fun addScrollListener() {
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView?, newState: Int) {
+                Log.e("$TAG-2", "onScrollStateChanged:$newState")
 
+                //滑动结束的时候才回调
+                //SCROLL_STATE_IDLE         已经停止滑动了
+                //SCROLL_STATE_DRAGGING     用户手指还在拖拽滑动
+                //SCROLL_STATE_SETTLING     还在依靠惯性滑动
+
+                //当前已经加载的数据量
+                val itemCount: Int = adapter!!.itemCount
+                //适配器的税局是否展示完了(最后一条可见数据是适配器的最后一条数据)
+                val isToAdaperBottom = lastVisiblePosition + 1 == itemCount
+                //是否已经停止滑动
+                val isStopScroll = RecyclerView.SCROLL_STATE_IDLE == newState
+                if (isToAdaperBottom && isStopScroll) {
+                    //滑到底部了并且已经停止滑动
+                }
+                //是否是已经在底部了还在向下滑
+                val isStillDragWhenAtBottom = lastScrollDY == 0
+                if (isToAdaperBottom && isStopScroll && isStillDragWhenAtBottom) {
+                    //到底部了还在向下滑
+                }
+
+                lastScrollDY = 0
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView?, dx: Int, dy: Int) {
+                Log.e("$TAG-3", "onScrolled:$dy")
+
+                //滑动过程中不断回调
+                //最后一条可见数据的位置(注意的类型转换)
+                recyclerView?.apply {
+                    lastVisiblePosition =
+                            (layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                }
+
+                lastScrollDY = dy
+
+                val itemCount: Int = adapter!!.itemCount
+                //是否需要加载下一页 //这里如果剩余的数据不足一页就加载下一页
+                val needLoadNextPage = (itemCount - (lastVisiblePosition + 1)) < pageSize
+                //是否在向下滑
+                val isScrollToBottom = lastScrollDY > 0
+
+                Log.e("$TAG-1", "$lastVisiblePosition,$needLoadNextPage,$isScrollToBottom")
+
+                if (needLoadNextPage && isScrollToBottom) {
+                    //这里去加载下一页
+//                    loadMoreData()
+                }
+            }
+        })
     }
     //<editor>
 }
