@@ -7,8 +7,10 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.StaggeredGridLayoutManager
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.Log
 import android.view.Gravity
@@ -39,7 +41,9 @@ class MainActivity : AppCompatActivity() {
         recyclerView = this.findViewById(R.id.recycler_view)
 
         //设置LayoutManager，LinearLayoutManager的方向默认是垂直的
-        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+//        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+//        recyclerView.layoutManager = GridLayoutManager(this, 2)
+        recyclerView.layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
 
         //设置动画
         addItemAnimation()
@@ -175,13 +179,12 @@ class MainActivity : AppCompatActivity() {
     //<editor-fold desc = "添加各种动画">
     private fun addItemAnimation() {
 
-        //重试UI的时候，使用动画 : 数量少但是块头大的数据，比如CardView
-        //重试数据的时候，不使用动画 : 数量多而简单的数据，比如消息列表
+        //重视UI的时候，使用动画 : 数量少但是块头大的数据，比如CardView
+        //重视数据的时候，不使用动画 : 数量多而简单的数据，比如消息列表
 //        adapter?.notifyItemInserted() //耗时的方法，会触发重新布局
         //recyclerView.isLayoutFrozen = true //不能滑动，设置适配器会自动设置为false
 
         //这里添加一个简单的拖拽和侧滑的动画
-
         //上下左右都能拖拽
         val dragDirs = ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
         //这里定义能左滑删除
@@ -189,6 +192,7 @@ class MainActivity : AppCompatActivity() {
         val callback = object : ItemTouchHelper.SimpleCallback(dragDirs, swipeDirs) {
             override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
                 //item移动的时候会回调到这里
+                //只要移动超过一个item，就会回调
 
                 try {
 
@@ -232,7 +236,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                //item滑动的时候会回调到这里
+                //item侧滑的时候会回调到这里
+                //只有侧滑完成才会回调
                 Log.e("addItemAnimation", "onSwiped")
                 datas.removeAt(viewHolder.adapterPosition)
                 adapter?.notifyItemRemoved(viewHolder.adapterPosition)
@@ -242,7 +247,7 @@ class MainActivity : AppCompatActivity() {
 
                 //onDraw()的时候往这里跑
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    //如果是正在滑动删除，则来一个淡出的动画
+                    //如果是正在滑动删除，则展示一个淡出的透明度动画
                     val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
                     viewHolder.itemView.alpha = alpha
                     viewHolder.itemView.translationX = dX
@@ -292,8 +297,13 @@ class MainActivity : AppCompatActivity() {
                 //滑动过程中不断回调
                 //最后一条可见数据的位置(注意的类型转换)
                 recyclerView?.apply {
-                    lastVisiblePosition =
-                            (layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    if (layoutManager is LinearLayoutManager) {
+                        lastVisiblePosition =
+                                (layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                    } else if (layoutManager is GridLayoutManager) {
+                        lastVisiblePosition =
+                                (layoutManager as GridLayoutManager).findLastVisibleItemPosition()
+                    }
                 }
 
                 lastScrollDY = dy
@@ -308,7 +318,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (needLoadNextPage && isScrollToBottom) {
                     //这里去加载下一页
-//                    loadMoreData()
+                    loadMoreData()
                 }
             }
         })
