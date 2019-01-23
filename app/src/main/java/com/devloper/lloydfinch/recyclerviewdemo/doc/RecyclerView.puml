@@ -1,26 +1,99 @@
 @startuml
+interface ScrollingView {
+    int computeHorizontalScrollRange();
+    int computeHorizontalScrollOffset()
+    int computeHorizontalScrollExtent();
+    int computeVerticalScrollRange();
+}
+note right of ScrollingView : 这是一个协助类，\n提供了一些滑动相关的api
 
-abstract class AbstractList
-abstract AbstractCollection
-interface List
-interface Collection
+interface NestedScrollingChild {
+}
+note right of NestedScrollingChild : 实现此接口的View可以作为内嵌滑动的View，\n也就是说，父View可滑动且自己也可以滑动，\n但是父View需要实现NestedScrollingParent
 
-List <|-- AbstractList
-Collection <|-- AbstractCollection
+class RecyclerView {
+    final ArrayList<ItemDecoration> mItemDecorations; //装饰物集合，分割线用的就是这玩意
+    ItemAnimator mItemAnimator; //动画
+    Runnable mItemAnimatorRunner; //这是动画的真正执行者
 
-Collection <|- List
-AbstractCollection <|- AbstractList
-AbstractList <|-- ArrayList
 
-class ArrayList {
-Object[] elementData
-size()
+
+    void postAnimationRunner() //这里是动画的执行入口
 }
 
-enum TimeUnit {
-DAYS
-HOURS
-MINUTES
+ViewGroup <|-- RecyclerView
+ScrollingView <|.. RecyclerView
+NestedScrollingChild <|.. RecyclerView
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+abstract class ItemDecoration {
+    onDraw(Canvas c) //item绘制之前绘制
+    onDrawOver(Canvas c) //item绘制之后绘制
+    getItemOffsets(Rect outRect) //用来作为item的insets(可以理解为margin)
 }
+'ItemDecoration的工作原理:
+'绘制item之前，先把onDraw()里面绘制的玩意绘制下来
+'接着绘制item，使用getItemOffsets(Rect outRect)里面设置的值作为insets占着位置
+'(说白了就是空着，因为空着，所以就漏出了onDraw()里面画的玩意，看着就像分割线似的)
+'最后绘制onDrawOver(Canvas c)里面绘制的东西，这里不管绘制什么，都会盖在item上面
+note right of ItemDecoration : 两个入口点:\n 1 onDraw()/onDrawOver()的调用在RecyclerView.draw() \n 2 getItemOffsets()的调用在RecyclerView.getItemDecorInsetsForChild()
+
+
+
+abstract class ItemAnimator{
+    private long mAddDuration = 120;
+    private long mRemoveDuration = 120;
+    private long mMoveDuration = 250;
+    private long mChangeDuration = 250;
+}
+note right of ItemAnimator : 这玩意太复杂，转DefaultItemAnimator
+
+class SimpleItemAnimator {
+    +void animateAppearance() //ViewHolder显示时调用
+    +void animateDisappearance() //ViewHolder不可见时调用
+    +void animatePersistence() //没用调用notifyDataSetChanged()或notifyItemChanged(position)但是布局发生改变的情况下回调
+    +void animateChange() //显式调用了notifyDataSetChanged()或notifyItemChanged(position)的情况下回调
+}
+
+class DefaultItemAnimator {
+    -ArrayList<ViewHolder> mPendingAdditions //即将执行的动画，detach的时候会释放
+
+    +boolean animateAdd(ViewHolder holder) //入口方法，仅在SimpleItemAnimator.animateAppearance()里面调用
+    void animateAddImpl(ViewHolder holder) //仅自己runPendingAnimations()调用
+    +void runPendingAnimations() //核心方法，执行动画的入口
+}
+
+ItemAnimator <|-- SimpleItemAnimator
+SimpleItemAnimator <|-- DefaultItemAnimator
+
+'工作流程
+'1 存放动画:
+'2 执行动画:
+'3 释放动画:
+'remove动画先执行，change和move并行执行，add动画最后执行
+'这个流程比较简单，模块化的跟一下
+
+note right of DefaultItemAnimator : 入口点就是SimpleItemAnimator里面的四个方法
+
 
 @enduml

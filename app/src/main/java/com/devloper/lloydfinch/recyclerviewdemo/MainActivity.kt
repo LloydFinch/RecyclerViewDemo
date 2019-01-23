@@ -7,24 +7,27 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.StaggeredGridLayoutManager
+import android.support.v7.widget.*
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.OvershootInterpolator
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.RecyclerAdapter
+import jp.wasabeef.recyclerview.animators.SlideInUpAnimator
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     val TAG = "MainActivity"
+
+    private lateinit var btnAdd: Button  //添加一条数据
+    private lateinit var btnRemove: Button //移除一条数据
 
     private lateinit var recyclerView: RecyclerView
     private val datas: ArrayList<String> = ArrayList()
@@ -38,12 +41,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        btnAdd = findViewById(R.id.btn_add)
+        btnAdd.setOnClickListener {
+            //添加一条数据
+            datas.add(0, "add0")
+            adapter?.apply {
+                notifyItemInserted(if (hadHeader()) 1 else 0)
+            }
+        }
+        btnRemove = findViewById(R.id.btn_remove)
+        btnRemove.setOnClickListener {
+            //移除一条数据
+            datas.removeAt(0)
+            adapter?.apply {
+                notifyItemRemoved(if (hadHeader()) 1 else 0)
+            }
+        }
+
         recyclerView = this.findViewById(R.id.recycler_view)
 
         //设置LayoutManager，LinearLayoutManager的方向默认是垂直的
-//        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
 //        recyclerView.layoutManager = GridLayoutManager(this, 2)
-        recyclerView.layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
+//        recyclerView.layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
 
         //设置动画
         addItemAnimation()
@@ -178,10 +198,8 @@ class MainActivity : AppCompatActivity() {
 
     //<editor-fold desc = "添加各种动画">
     private fun addItemAnimation() {
-
         //重视UI的时候，使用动画 : 数量少但是块头大的数据，比如CardView
         //重视数据的时候，不使用动画 : 数量多而简单的数据，比如消息列表
-//        adapter?.notifyItemInserted() //耗时的方法，会触发重新布局
         //recyclerView.isLayoutFrozen = true //不能滑动，设置适配器会自动设置为false
 
         //这里添加一个简单的拖拽和侧滑的动画
@@ -245,20 +263,60 @@ class MainActivity : AppCompatActivity() {
 
             override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
 
-                //onDraw()的时候往这里跑
-                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    //如果是正在滑动删除，则展示一个淡出的透明度动画
-                    val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
-                    viewHolder.itemView.alpha = alpha
-                    viewHolder.itemView.translationX = dX
-                } else {
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                }
+//                //onDraw()的时候往这里跑
+//                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+//                    //如果是正在滑动删除，则展示一个淡出的透明度动画
+//                    val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
+//                    viewHolder.itemView.alpha = alpha
+//                    viewHolder.itemView.translationX = dX
+//                } else {
+//                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+//                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+
             }
         }
 
         val itemTouchHelper = ItemTouchHelper(callback)
         itemTouchHelper.attachToRecyclerView(recyclerView)
+
+
+        //来个自定义动画了解一下动画实现机制
+        recyclerView.itemAnimator = DefaultItemAnimator()
+//        recyclerView.itemAnimator = object : SimpleItemAnimator() {
+//            override fun runPendingAnimations() {
+//
+//            }
+//
+//            override fun isRunning(): Boolean {
+//            }
+//
+//            override fun endAnimation(item: RecyclerView.ViewHolder?) {
+//            }
+//
+//            override fun endAnimations() {
+//            }
+//
+//            override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean {
+//                return true
+//            }
+//
+//            override fun animateMove(holder: RecyclerView.ViewHolder?, fromX: Int, fromY: Int, toX: Int, toY: Int): Boolean {
+//                return true
+//            }
+//
+//            override fun animateRemove(holder: RecyclerView.ViewHolder?): Boolean {
+//                return true
+//            }
+//
+//            override fun animateChange(oldHolder: RecyclerView.ViewHolder?, newHolder: RecyclerView.ViewHolder?, fromLeft: Int, fromTop: Int, toLeft: Int, toTop: Int): Boolean {
+//                return true
+//            }
+//
+//        }
+
+
     }
     //<editor-fold>
 
