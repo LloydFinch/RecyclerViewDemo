@@ -2,9 +2,12 @@ package com.devloper.lloydfinch.recyclerviewdemo.recyclerview;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
+
+import java.lang.reflect.Modifier;
 
 /**
  * 自定义的RecyclerView,扩展了一系列模仿ListView的便捷方法
@@ -58,6 +61,17 @@ public class CusRecyclerView extends RecyclerView {
         this.footerView = footerView;
         if (mAdapter != null) {
             mAdapter.setFooterView(footerView);
+        }
+
+
+        Class claz = DefaultItemAnimator.class;
+        try {
+            DefaultItemAnimator itemAnimator = (DefaultItemAnimator) claz.newInstance();
+            int a = ~Modifier.FINAL;
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
     }
 

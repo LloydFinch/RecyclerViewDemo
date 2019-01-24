@@ -13,13 +13,14 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
+import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.CurItemAnimator
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.RecyclerAdapter
-import jp.wasabeef.recyclerview.animators.SlideInUpAnimator
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -282,40 +283,25 @@ class MainActivity : AppCompatActivity() {
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
 
-        //来个自定义动画了解一下动画实现机制
-        recyclerView.itemAnimator = DefaultItemAnimator()
-//        recyclerView.itemAnimator = object : SimpleItemAnimator() {
-//            override fun runPendingAnimations() {
-//
-//            }
-//
-//            override fun isRunning(): Boolean {
-//            }
-//
-//            override fun endAnimation(item: RecyclerView.ViewHolder?) {
-//            }
-//
-//            override fun endAnimations() {
-//            }
-//
-//            override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean {
-//                return true
-//            }
-//
-//            override fun animateMove(holder: RecyclerView.ViewHolder?, fromX: Int, fromY: Int, toX: Int, toY: Int): Boolean {
-//                return true
-//            }
-//
-//            override fun animateRemove(holder: RecyclerView.ViewHolder?): Boolean {
-//                return true
-//            }
-//
-//            override fun animateChange(oldHolder: RecyclerView.ViewHolder?, newHolder: RecyclerView.ViewHolder?, fromLeft: Int, fromTop: Int, toLeft: Int, toTop: Int): Boolean {
-//                return true
-//            }
-//
-//        }
+        //来个自定义动画了解一下动画实现机制 //完全的拷贝DefaultItemAnimator
+        val itemAnimatorClass = CurItemAnimator::class.java
+        val itemAnimator = itemAnimatorClass.newInstance()
+//        val debug = itemAnimatorClass.getDeclaredField("DEBUG")
+//        debug.isAccessible = true
+//        debug.setBoolean(itemAnimator, true)
+        itemAnimator.addDuration = 2000 //这里放慢一下动画效果
+        itemAnimator.removeDuration = 2000
 
+
+        val simpleItemAnimatorClass = SimpleItemAnimator::class.java
+        val debug = simpleItemAnimatorClass.getDeclaredField("DEBUG")
+        debug.isAccessible = true
+        debug.setBoolean(itemAnimator, true)
+        Log.e("addItemAnimation", "debug: ${debug.name}, ${debug.type}")
+        Log.e("addItemAnimation", "debug = ${debug.getBoolean(itemAnimator)}")
+
+
+        recyclerView.itemAnimator = itemAnimator
 
     }
     //<editor-fold>

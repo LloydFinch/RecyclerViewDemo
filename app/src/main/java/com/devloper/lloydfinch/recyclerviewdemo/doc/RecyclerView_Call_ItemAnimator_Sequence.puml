@@ -1,0 +1,40 @@
+'RecyclerView的动画调用时序图，这里分析的是四大动画中的添加动画
+
+@startuml
+autonumber
+
+Actor user
+
+user -> RecyclerView : XXXXX
+RecyclerView -> RecyclerView : dispatchLayout()
+note right : 记住这个dispatchLayout，动画的入口是从这里进入的
+RecyclerView -> RecyclerView : dispatchLayoutStep3()
+RecyclerView -> ViewInfoStore : process(ProcessCallback)
+note right : 这一行代码的运行条件之一是ItemAnimator!=null，\n也就是有动画才会执行
+ViewInfoStore -> ProcessCallback : processAppeared()
+ProcessCallback -> RecyclerView : animateAppearance(ViewHolder)
+RecyclerView -> ItemAnimator : animateAppearance(ViewHolder)
+ItemAnimator -> ItemAnimator : animateAdd(ViewHolder)
+note right : 这里会调用mPendingAnimations.add(ViewHolder)，到这里动画已经添加了
+
+RecyclerView -> RecyclerView: postAnimationRunner()
+RecyclerView -> ViewCompat : postOnAnimation(Runnable mItemAnimatorRunner)
+ViewCompat -> ItemAnimator : runPendingAnimations()
+note right : 这里会mAdditionsList.add(mPendingAnimations)将即将运行的动画添加到正在运行的动画列表中，\n然后调用mPendingAnimations.clear()清除即将运行的动画，\n这是一个遍历操作，遍历所有存储的ViewHolder进行动画
+ItemAnimator -> ItemAnimator : animateAddImpl(ViewHolder)
+note right : 这里会调用mAddAnimations.add(ViewHolder)表示这是一个添加的动画，\n其他相应的动画也会添加到相应的列表中去
+ItemAnimator -> ViewHolder : ViewHolder.item.animate().start()
+note right : 这里有个动画监听的回调，在动画结束后会调用mAddAnimations.remove(ViewHolder)移除对应的动画，\n其他相应的动画也有此操作，\n动画到此已经被消耗
+
+
+'这里做个总结:
+'一个add动画的过程:
+'1 将这个item下面的所有item都向下进行一个move动画，最后一个item会滑出屏幕，从而触发animateDisappearance(ViewHolder)
+'2 不滑出屏幕的item因为布局发生改变会触发animatePersistence(ViewHolder)
+'3 这两类item最终都触发了move动画，从而集体进行一个向下的move动画
+'4 move动画完事之后，新加的那个item会进行一个add动画(默认实现的是一个透明度动画)
+
+'remove动画的道理是一样的，只不过先执行删除的item的remove再执行它下面的item的向上move而已
+'重点是从而触发animateAppearance()/animateDisappearance()里面的判断逻辑，是不是因为滑动引起的可见/不可见而已
+
+@enduml

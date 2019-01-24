@@ -66,17 +66,23 @@ abstract class ItemAnimator{
     private long mMoveDuration = 250;
     private long mChangeDuration = 250;
 }
-note right of ItemAnimator : 这玩意太复杂，转DefaultItemAnimator
+note right of ItemAnimator : 这玩意太抽象，转DefaultItemAnimator
 
 class SimpleItemAnimator {
-    +void animateAppearance() //ViewHolder显示时调用
-    +void animateDisappearance() //ViewHolder不可见时调用
+    +void animateAppearance() //item显示时调用，可能是添加或者滑入屏幕引起的
+    +void animateDisappearance() //item不可见时调用，可能是删除或者滑出屏幕引起的
     +void animatePersistence() //没用调用notifyDataSetChanged()或notifyItemChanged(position)但是布局发生改变的情况下回调
     +void animateChange() //显式调用了notifyDataSetChanged()或notifyItemChanged(position)的情况下回调
 }
 
 class DefaultItemAnimator {
-    -ArrayList<ViewHolder> mPendingAdditions //即将执行的动画，detach的时候会释放
+    //这里说明一下，动画有4种: add、remove、change、move，都有对应的列表，这里分析的是add动画
+    //这一要注一下move和change动画，对应两个类MoveInfo和ChangeInfo，只是包装了一层位置参数，实现原理是一样的
+    -ArrayList<ViewHolder> mPendingAdditions //本次layout中即将执行的add动画的集合，detach的时候会释放
+    //下一次要执行的动画中的add动画的集合，下一次是值:当前如果正在跑remove动画，此时过来一个add动画不会执行，
+    //会保存mAdditionsList中，等到remove动画跑完之后再一起执行
+    ArrayList<ArrayList<ViewHolder>> mAdditionsList;
+    ArrayList<ViewHolder> mAddAnimations; //正在执行的add动画的集合
 
     +boolean animateAdd(ViewHolder holder) //入口方法，仅在SimpleItemAnimator.animateAppearance()里面调用
     void animateAddImpl(ViewHolder holder) //仅自己runPendingAnimations()调用
