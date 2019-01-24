@@ -264,18 +264,15 @@ class MainActivity : AppCompatActivity() {
 
             override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
 
-//                //onDraw()的时候往这里跑
-//                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-//                    //如果是正在滑动删除，则展示一个淡出的透明度动画
-//                    val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
-//                    viewHolder.itemView.alpha = alpha
-//                    viewHolder.itemView.translationX = dX
-//                } else {
-//                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-//                }
-
-                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-
+                //onDraw()的时候往这里跑
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    //如果是正在滑动删除，则展示一个淡出的透明度动画
+                    val alpha = 1 - Math.abs(dX) / viewHolder.itemView.width.toFloat()
+                    viewHolder.itemView.alpha = alpha
+                    viewHolder.itemView.translationX = dX
+                } else {
+                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                }
             }
         }
 
