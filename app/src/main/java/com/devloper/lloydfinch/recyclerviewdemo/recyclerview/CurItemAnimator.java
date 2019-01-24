@@ -213,6 +213,7 @@ public class CurItemAnimator extends SimpleItemAnimator {
         mAddAnimations.add(holder);
 
         //这里改的风骚一点
+        //但是在动画结束的时候要还原，因为这是属性动画，而且有布局复用，不还原会影响其他item
         animation.alpha(1).rotation(10000).translationX(5f).scaleX(5).setDuration(getAddDuration())
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
@@ -231,6 +232,8 @@ public class CurItemAnimator extends SimpleItemAnimator {
                         dispatchAddFinished(holder);
                         mAddAnimations.remove(holder);
                         dispatchFinishedWhenDone();
+
+                        //这里记得还原
                     }
                 }).start();
     }
