@@ -19,8 +19,6 @@ import android.widget.TextView
 import android.widget.Toast
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.CurItemAnimator
 import com.devloper.lloydfinch.recyclerviewdemo.recyclerview.RecyclerAdapter
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -98,6 +96,7 @@ class MainActivity : AppCompatActivity() {
 
         adapter?.notifyDataSetChanged()
     }
+    //</editor-fold>
 
     //加载更多数据，这里一次加载一页
     private fun loadMoreData() {
@@ -114,7 +113,6 @@ class MainActivity : AppCompatActivity() {
             isLoading = false
         }
     }
-    //<editor-fold>
 
     //<editor-fold desc = "添加自定义分割线">
     private fun addItemDecoration() {
@@ -160,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         }
         recyclerView.addItemDecoration(itemDecoration)
     }
-    //<editor-fold>
+    //</editor-fold>
 
     //<editor-fold desc = "添加header、footer、EmptyView、ItemClickListener">
     @SuppressLint("SetTextI18n")
@@ -195,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         //ItemClickListener:传给适配器一个点击事件即可，然后适配器再设置给ViewHolder的itemView
         //代码看适配器
     }
-    //<editor-fold>
+    //</editor-fold>
 
     //<editor-fold desc = "添加各种动画">
     private fun addItemAnimation() {
@@ -281,7 +279,7 @@ class MainActivity : AppCompatActivity() {
 
 
         //来个自定义动画了解一下动画实现机制 //完全的拷贝DefaultItemAnimator
-        val itemAnimatorClass = CurItemAnimator::class.java
+        val itemAnimatorClass = DefaultItemAnimator::class.java
         val itemAnimator = itemAnimatorClass.newInstance()
 //        val debug = itemAnimatorClass.getDeclaredField("DEBUG")
 //        debug.isAccessible = true
@@ -290,18 +288,18 @@ class MainActivity : AppCompatActivity() {
         itemAnimator.removeDuration = 2000
 
 
-        val simpleItemAnimatorClass = SimpleItemAnimator::class.java
-        val debug = simpleItemAnimatorClass.getDeclaredField("DEBUG")
-        debug.isAccessible = true
-        debug.setBoolean(itemAnimator, true)
-        Log.e("addItemAnimation", "debug: ${debug.name}, ${debug.type}")
-        Log.e("addItemAnimation", "debug = ${debug.getBoolean(itemAnimator)}")
+//        val simpleItemAnimatorClass = SimpleItemAnimator::class.java
+//        val debug = simpleItemAnimatorClass.getDeclaredField("DEBUG")
+//        debug.isAccessible = true
+//        debug.setBoolean(itemAnimator, true)
+//        Log.e("addItemAnimation", "debug: ${debug.name}, ${debug.type}")
+//        Log.e("addItemAnimation", "debug = ${debug.getBoolean(itemAnimator)}")
 
 
         recyclerView.itemAnimator = itemAnimator
 
     }
-    //<editor-fold>
+    //</editor-fold>
 
     //<editor-fold desc = "添加滑动监听事件">
     private fun addScrollListener() {
@@ -364,5 +362,5 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-    //<editor>
+    //</editor-fold>
 }

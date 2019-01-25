@@ -33,6 +33,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.VH> {
     }
 
     public RecyclerAdapter(List<String> list) {
+        super();
         this.list = list;
     }
 

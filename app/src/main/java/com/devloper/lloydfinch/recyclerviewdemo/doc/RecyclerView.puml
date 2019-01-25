@@ -15,7 +15,7 @@ class RecyclerView {
     final ArrayList<ItemDecoration> mItemDecorations; //装饰物集合，分割线用的就是这玩意
     ItemAnimator mItemAnimator; //动画
     Runnable mItemAnimatorRunner; //这是动画的真正执行者
-
+    final ViewInfoStore mViewInfoStore; //这个是保存ViewHolder的状态的，ViewHolder要执行什么动画在这里映射，不过他的存储过程是在layout阶段
 
 
     void postAnimationRunner() //这里是动画的执行入口

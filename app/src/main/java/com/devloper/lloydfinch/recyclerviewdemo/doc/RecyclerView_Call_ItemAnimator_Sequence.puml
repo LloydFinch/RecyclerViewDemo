@@ -29,7 +29,7 @@ note right : 这里有个动画监听的回调，在动画结束后会调用mAdd
 
 '这里做个总结:
 '一个add动画的过程:
-'1 将这个item下面的所有item都向下进行一个move动画，最后一个item会滑出屏幕，从而触发animateDisappearance(ViewHolder)
+'1 将这个item下面的所有item都向下进行一个move动画，最后一个item会滑出屏幕，从而触发animateDisappearance(ViewHolder)，这个"所有"是在ViewInfoStore.process()里面映射的
 '2 不滑出屏幕的item因为布局发生改变会触发animatePersistence(ViewHolder)
 '3 这两类item最终都触发了move动画，从而集体进行一个向下的move动画
 '4 move动画完事之后，新加的那个item会进行一个add动画(默认实现的是一个透明度动画)
